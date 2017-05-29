@@ -1,0 +1,72 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans:beans xmlns="http://www.springframework.org/schema/security"
+             xmlns:beans="http://www.springframework.org/schema/beans"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:facebook="http://www.springframework.org/schema/aop"
+             xmlns:context="http://www.springframework.org/schema/context"
+             xmlns:security="http://www.springframework.org/schema/security"
+             xsi:schemaLocation="http://www.springframework.org/schema/security http://www.springframework.org/schema/security/spring-security-3.2.xsd
+		http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-4.0.xsd
+		http://www.springframework.org/schema/social/facebook http://www.springframework.org/schema/social/spring-social-facebook.xsd
+		http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-4.3.xsd
+		http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop.xsd">
+
+    <http use-expressions="true">
+
+        <!-- Uncomment after configuring tomcat for ssl -->
+<!--      <intercept-url pattern="/**" requires-channel="https" />
+        <port-mappings>
+            <port-mapping http="8080" https="8443" />
+        </port-mappings> -->
+
+		<intercept-url pattern="/admin/**" access="hasRole('ADMIN')"/> 
+        <intercept-url pattern="/profile" access="hasAnyRole('USER','ADMIN','VKONTAKTE_USER',
+                                                             'FACEBOOK_USER','TWITTER_USER')"/>
+        <intercept-url pattern="/signup/**" access="permitAll" />
+        <intercept-url pattern="/signin/**" access="permitAll" />
+        <intercept-url pattern="/reset_password" access="hasRole('CHANGE_PASSWORD_PRIVILEGE')" />
+        <intercept-url pattern="/change_password" access="hasAnyRole('ADMIN','USER')" />
+        
+        <form-login login-page='/'
+                    authentication-success-handler-ref="SuccessLoginHandler"
+                    authentication-failure-url="/login?error=true"
+                    username-parameter="user_login"
+                    password-parameter="user_password"/>
+
+        <logout logout-success-url="/home"/>
+
+        <remember-me  data-source-ref="dataSource"
+                      token-validity-seconds="259200" />
+        <security:remember-me data-source-ref="dataSource"
+                     services-ref="socialRememberMe" />
+    </http>
+
+
+
+    <beans:bean id = "socialRememberMe" class="org.springframework.security.web.authentication.rememberme.PersistentTokenBasedRememberMeServices" >
+        <beans:property name="userDetailsService" ref="userDetailsManager" />
+        <beans:property name="key" value="1535135124421" />
+        <beans:property name="alwaysRemember" value="true"/>
+        <beans:property name="tokenValiditySeconds" value="259200" />
+        <beans:property name="tokenRepository" ref="tokenRepository" />
+    </beans:bean>
+
+    <beans:bean id="tokenRepository" class="org.springframework.security.web.authentication.rememberme.JdbcTokenRepositoryImpl" >
+        <beans:property name="dataSource" ref="dataSource" />
+    </beans:bean>
+
+    <authentication-manager>
+        <authentication-provider >
+            <password-encoder ref="bcrypt"/>
+            <jdbc-user-service id="userDetailsManager" data-source-ref="dataSource"
+                               users-by-username-query="${users-by-username-query}"
+                               authorities-by-username-query="${authorities-by-username-query}"/>
+        </authentication-provider>
+    </authentication-manager>
+    
+    <beans:bean id='bcrypt'
+                class="org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder">
+        <beans:constructor-arg name="strength" value='11'/>
+    </beans:bean>
+
+</beans:beans>
