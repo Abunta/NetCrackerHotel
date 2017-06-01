@@ -49,7 +49,7 @@ public class RegistrationListener implements ApplicationListener<OnRegistrationC
         SimpleMailMessage email = new SimpleMailMessage();
         email.setTo(recipientAddress);
         email.setSubject(subject);
-        email.setText(message + " rn\t" + "https://netcrackerhotel.herokuapp.com" + confirmationUrl);
+        email.setText(message + " rn\t" + "https://netcrackerhotel.herokuapp.com/" + confirmationUrl);
         mailSender.send(email);
     }
 }
